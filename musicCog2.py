@@ -7,13 +7,14 @@ import traceback
 from async_timeout import timeout
 from functools import partial
 from youtube_dl import YoutubeDL
+import itertools
 
 from testing import YTDLSource
 
 
 ytdl_options = {
     'format': 'bestaudio/best',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'outtmpl': 'downloads/%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
     'nocheckcertificate': True,
@@ -71,7 +72,7 @@ class ytdlSource(discord.PCMVolumeTransformer):
         if download: 
             source = ytdl.prepare_filename(data) #if the download option is true, prepare the filename
         else:
-            return {'webpage_url': data.get('webpage_url'), 'requester': ctx.author, 'title': data.get('title')} #if the download option is false, return the data
+            return {'webpage_url': data('webpage_url'), 'requester': ctx.author, 'title': data('title')} #if the download option is false, return the data
 
         return cls(discord.FFmpegPCMAudio(source, **ffmpeg_options), data=data, requester=ctx.author) #return the source
 
@@ -279,3 +280,21 @@ class music(commands.Cog):
         
         await self.cleanup(ctx.guild) #cleanup the voice client player in the guild/server
             
+    #bot commands - view the queue
+    @commands.command(name='queue', aliases=['q'], description="view the queue") #view the queue
+    async def queue(self, ctx):
+        vc = ctx.voice_client  #get the voice client
+        if not vc or not vc.is_connected(): #if there is no voice client or the voice client is not connected
+            return await ctx.send('Not connected.') #send a message
+        else:
+            player = self.get_player(ctx)
+            if player.queue.empty():
+                return await ctx.send('Empty queue.')
+            else:
+                queue = list(itertools.islice(player.queue._queue, 0, int(len(player.queue._queue)))) #get the items in the queue
+                inQueue = '\n'.join(f"`{(queue.index(_)) + 1}.` [{_['title']}] ({_['webpage_url']}) |` Requested by {_['requester']}`\n" for _ in queue) #get the queue
+                inQueue = f"\nNow playing:\n[{vc.source.title}]({vc.source.url}) | 'Requested by {vc.source.requester}'\n\n Up next:\n" + inQueue + f"\n**{len(queue)} songs in queue**"
+                embed =  discord.Embed(title=f'Queue for {ctx.guild.name}', description=inQueue, color=discord.Color.green())
+                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+
+                await ctx.send(embed=embed)
