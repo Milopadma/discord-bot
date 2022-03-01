@@ -5,6 +5,7 @@ import discord
 import random
 from dotenv import load_dotenv
 from discord.ext import commands
+from autoResponse import autoresponse
 
 from helpCog import helpCog
 # from musicCog import music_cog
@@ -22,6 +23,7 @@ bot.remove_command("help")
 bot.add_cog(helpCog(bot))
 # bot.add_cog(music_cog(bot))
 bot.add_cog(musicCog2.music(bot))
+bot.add_cog(autoresponse(bot))
 
 
 @bot.event

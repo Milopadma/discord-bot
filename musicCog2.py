@@ -2,15 +2,13 @@ import discord
 from discord.ext import commands
 import random
 import asyncio
+import os
 import sys
 import traceback
 from async_timeout import timeout
 from functools import partial
 from youtube_dl import YoutubeDL
 import itertools
-
-from testing import YTDLSource
-
 
 ytdl_options = {
     'format': 'bestaudio/best',
@@ -116,7 +114,7 @@ class musicPlayer:
             except asyncio.TimeoutError: #if the timeout is reached
                 return self.destroy(self._guild) #destroy the player
 
-            if not isinstance(source, YTDLSource): #if the source is not a YTDLSource
+            if not isinstance(source, ytdlSource): #if the source is not a YTDLSource
                 try: #try to regather the stream
                     source = await ytdlSource.regatherStream(source, loop=self.bot.loop) #regather the stream
                 except Exception as e: #if there is an error
@@ -130,13 +128,13 @@ class musicPlayer:
             #play the source and set the next event
             self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
             await self.next.wait() #wait for the next event to be set
-
+            
             source.cleanup() #call cleanup func to cleanup the source
             self.current = None #set the current song to none
         
     def destroy(self, guild): #calls the cleanup func to cleanup the player and the dc
         return self.bot.loop.create_task(self._cog.cleanup(guild)) #create a task to clean up the player
-
+        
 
 
 #######################################################################################################################
@@ -166,7 +164,7 @@ class music(commands.Cog):
         if not ctx.guild: #if the context is not a guild
             raise commands.NoPrivateMessage #raise an error
         return True #return true
-
+        
 
     #error handler
     async def __error(self, ctx, error): #error handler
@@ -231,7 +229,7 @@ class music(commands.Cog):
         if not vc: #if there is no voice client
             await ctx.invoke(self.connect) #invoke the connect command
         player = self.get_player(ctx) #get the player
-        source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop, download=False) #create a source from the search
+        source = await ytdlSource.create_source(ctx, search, loop=self.bot.loop, download=False) #create a source from the search
         await player.queue.put(source) #add the source to the queue
 
     #bot commands - pause the song
@@ -298,3 +296,29 @@ class music(commands.Cog):
                 embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
 
                 await ctx.send(embed=embed)
+
+    #bot commands - playlist view
+    @commands.command(name='playlist', aliases=['ps'], description="view playlist") 
+    async def playlist(self, ctx):
+        #find the relative path of file
+        guildplaylistfile = os.path.realpath(os.path.join(os.path.dirname(__file__), 'guildplaylist', f'{ctx.guild.id}.txt'))
+        #open the file
+        with open(guildplaylistfile, 'r') as f:
+            playlist = f.readlines()
+        playlist = '\n'.join(playlist)
+        embed =  discord.Embed(title=f'Playlist for {ctx.guild.name}', description=playlist, color=discord.Color.green())
+        embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=embed)
+        await message.add_reaction("1️⃣") #add the reactions to the message
+        f.close()
+
+    @commands.command(name='add', aliases=['a'], description="adds a song to the playlist")
+    async def add(self, ctx, *, search: str):
+        #find the relative path of file
+        guildplaylistfile = os.path.realpath(os.path.join(os.path.dirname(__file__), 'guildplaylist', f'{ctx.guild.id}.txt'))
+        #open the file
+        with open(guildplaylistfile, 'a') as f:
+            f.write(f'\n{search}')
+        await ctx.send(f'Added {search} to the playlist')
+        f.close()
+
