@@ -7,16 +7,17 @@ class helpCog(commands.Cog):
 
         self.help_message = """
 ```
-$hlp - displays this message
-$hello - says hello
-$join - joins the voice channel 
-$play - plays a youtube video
-$pause - pauses the current song
-$resume - resumes the current song
-$skip - skips the current song
-$queue - displays the current queue
-&clearqueue - clears the current queue
-$leave - leaves the voice channel
+$help                - displays this message
+$hello               - says hello
+$join (or {connect}) - joins the voice channel 
+$play (or {p})       - plays a youtube video or stream
+$playlist (or {ps})  - shows a list of saved playlist, and plays the selected playlist (not implemented)
+$pause (or {pa})     - pauses the current song
+$resume (or {r})     - resumes the current song
+$skip (or {p})       - skips the current song
+$queue (or {q})      - displays the current queue (not implemented)
+&clearqueue (or {cq})- clears the current queue (not implemented)
+$leave (or {d}, {dc})- leaves the voice channel
 ```
 """
 
@@ -34,6 +35,8 @@ $leave - leaves the voice channel
     #     for text_channel in self.text_channel_text:
     #         await text_channel.send(msg)
 
-    @commands.command(name="hlp", aliases=['he'], help="Displays this message")
+    @commands.command(name="hlp", aliases=['help'], help="Displays this message")
     async def help(self, ctx):
         await ctx.send(self.help_message)
+
+    

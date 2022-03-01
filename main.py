@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from discord.ext import commands
 
 from helpCog import helpCog
-from musicCog import music_cog
+# from musicCog import music_cog
+import musicCog2
 
 #initialize bot
 bot = commands.Bot(command_prefix='$')
@@ -19,12 +20,21 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 bot.remove_command("help")
 
 bot.add_cog(helpCog(bot))
-bot.add_cog(music_cog(bot))
+# bot.add_cog(music_cog(bot))
+bot.add_cog(musicCog2.music(bot))
 
+
+@bot.event
+async def on_ready():
+    print('\nLogged in as')
+    print(bot.user.name)
+    print(bot.user.id)
+    print('------')
 
 #bot commands
 @bot.command(pass_context=True)
 async def hello(ctx):
+    await ctx.trigger_typing()
     await ctx.send("Hello!")
 
 # #bot commands - join author voice call
