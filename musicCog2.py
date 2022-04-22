@@ -70,7 +70,7 @@ class ytdlSource(discord.PCMVolumeTransformer):
         if download: 
             source = ytdl.prepare_filename(data) #if the download option is true, prepare the filename
         else:
-            return {'webpage_url': data('webpage_url'), 'requester': ctx.author, 'title': data('title')} #if the download option is false, return the data
+            return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']} #if the download option is false, return the data            
 
         return cls(discord.FFmpegPCMAudio(source, **ffmpeg_options), data=data, requester=ctx.author) #return the source
 
